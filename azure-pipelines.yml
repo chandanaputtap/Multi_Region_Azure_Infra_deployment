@@ -1,0 +1,82 @@
+trigger:
+- main
+
+variables:
+  TF_WORKING_DIR: '.'            # Path to your main Terraform .tf files
+  TF_VERSION: '1.7.5'  
+  
+  ARM_CLIENT_ID: $(clientId)
+  ARM_CLIENT_SECRET: $(clientSecret)
+  ARM_SUBSCRIPTION_ID: $(subscriptionId)
+  ARM_TENANT_ID: $(tenantId)         # Use a valid Terraform version
+
+  # Backend variables for Terraform state
+  RESOURCE_GROUP_NAME: $(resourceGroupName)
+  BACKEND_STORAGE_ACCOUNT: $(backendStorageAccount)
+  BACKEND_CONTAINER_NAME: $(backendContainerName)
+  BACKEND_KEY: $(backendKey)
+
+stages:
+
+# -------------------
+# Stage 1: Apply
+# -------------------
+- stage: TerraformApply
+  displayName: Deploy Infrastructure
+  jobs:
+  - job: TerraformJob
+    displayName: Terraform Apply
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    - checkout: self
+
+    - script: |
+        echo "Installing Terraform..."
+        curl -sL https://releases.hashicorp.com/terraform/$(TF_VERSION)/terraform_$(TF_VERSION)_linux_amd64.zip -o terraform.zip
+        unzip terraform.zip
+        sudo mv terraform /usr/local/bin/
+        terraform -version
+      displayName: 'Install Terraform'
+
+    - script: |
+        terraform init -input=false \
+          -backend-config="storage_account_name=$(BACKEND_STORAGE_ACCOUNT)" \
+          -backend-config="container_name=$(BACKEND_CONTAINER_NAME)" \
+          -backend-config="key=$(BACKEND_KEY)" \
+          -backend-config="resource_group_name=$(RESOURCE_GROUP_NAME)"
+      workingDirectory: $(TF_WORKING_DIR)
+      displayName: 'Terraform Init with Backend Config'
+      env:
+        ARM_SUBSCRIPTION_ID: $(subscriptionId)
+        ARM_CLIENT_ID: $(clientId)
+        ARM_CLIENT_SECRET: $(clientSecret)
+        ARM_TENANT_ID: $(tenantId)
+
+    - script: terraform validate
+      workingDirectory: $(TF_WORKING_DIR)
+      displayName: 'Terraform Validate'
+      env:
+        ARM_SUBSCRIPTION_ID: $(subscriptionId)
+        ARM_CLIENT_ID: $(clientId)
+        ARM_CLIENT_SECRET: $(clientSecret)
+        ARM_TENANT_ID: $(tenantId)
+
+    - script: terraform plan -input=false
+      workingDirectory: $(TF_WORKING_DIR)
+      displayName: 'Terraform Plan'
+      env:
+        ARM_SUBSCRIPTION_ID: $(subscriptionId)
+        ARM_CLIENT_ID: $(clientId)
+        ARM_CLIENT_SECRET: $(clientSecret)
+        ARM_TENANT_ID: $(tenantId)
+
+    - script: terraform apply -input=false -auto-approve
+      workingDirectory: $(TF_WORKING_DIR)
+      displayName: 'Terraform Apply'
+      env:
+        ARM_SUBSCRIPTION_ID: $(subscriptionId)
+        ARM_CLIENT_ID: $(clientId)
+        ARM_CLIENT_SECRET: $(clientSecret)
+        ARM_TENANT_ID: $(tenantId)
