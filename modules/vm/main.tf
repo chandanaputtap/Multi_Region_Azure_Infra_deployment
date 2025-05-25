@@ -58,7 +58,7 @@ resource "azurerm_network_interface_security_group_association" "nsg_assoc" {
 
 
 data "azurerm_key_vault" "kv" {
-  name                = "keyvault1-multiregion"             # your manually created Key Vault name
+  name                = "keyvault2-multiregion"             # your manually created Key Vault name
   resource_group_name = "keyvault-rg"                   # Key Vault's resource group
 }
 
