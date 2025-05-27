@@ -5,19 +5,19 @@ resource "random_string" "rand" {
 }
 
 module "eastus" {
-  source = "./modules/region"
+  source = "git::https://github.com/chandanaputtap/Multi_Region_Azure_Infra_deployment.git//modules/region?ref=main"
   region = "eastus"
   name   = "eastus"
 }
 
 module "canadacentral" {
-  source = "./modules/region"
+  source = "git::https://github.com/chandanaputtap/Multi_Region_Azure_Infra_deployment.git//modules/region?ref=main"
   region = "canadacentral"
   name   = "canadacentral"
 }
 
 module "frontdoor" {
-  source              = "./modules/frontdoor"
+  source              = "git::https://github.com/chandanaputtap/Multi_Region_Azure_Infra_deployment.git//modules/frontdoor?ref=main"
  backend_ips = {
   "canadacentral" = module.canadacentral.public_ip
   "eastus"        = module.eastus.public_ip
@@ -29,7 +29,7 @@ module "frontdoor" {
 }
 
 module "monitoring" {
-  source              = "./modules/monitoring"
+  source              = "git::https://github.com/chandanaputtap/Multi_Region_Azure_Infra_deployment.git//modules/monitoring?ref=main"
   location            = module.eastus.location
   resource_group_name = module.eastus.resource_group_name
   vm_ids              = {
